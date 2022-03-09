@@ -1,0 +1,99 @@
+function sysCall_init()
+    RobotBase=sim.getObjectAssociatedWithScript(sim.handle_self)
+    left_wheel=sim.getObjectHandle('motor_left')
+    right_wheel=sim.getObjectHandle('motor_right')  
+    robot_pose=sim.getObjectHandle('SICK_TiM310_fast')
+    sensor=sim.getObjectHandle('SICK_TiM310_fast')
+    path=sim.getObjectHandle('Path')
+    pose=updateRobotPose()
+
+    wheel_radius=0.195/2
+    b=0.1655
+    vref=0.35
+    e=0.24
+    k=1
+    
+    sim.setPathTargetNominalVelocity(path,vref) -- in m/s
+    ref_point=sim.getObjectHandle('ref_point')
+    
+    laserPoints={}
+    simGridMap.init({0.1,50,0.9,0.1,10,0.1,0.1,0.8,0.7,0.3}, true)
+end
+
+function sysCall_cleanup()
+    simGridMap.release()
+end 
+
+function sysCall_actuation()
+    local wL,wR
+    local ptraj,vtraj,poff
+    ptraj,vtraj=getTrajectoryPoint()
+    poff,voff=getOffCenterPoint(ptraj,vtraj,e)
+    wL,wR=kinematicControl(poff,voff,pose,k)
+    sim.setJointTargetVelocity(left_wheel,wL)
+    sim.setJointTargetVelocity(right_wheel,-wR)
+end 
+
+function sysCall_sensing()
+    laserPoints=getLaserPoints()
+    pose=updateRobotPose()
+    simGridMap.updateMapLaser(getLaserPoints(),updateRobotPose())
+
+end
+
+function getLaserPoints()
+    local laserScan
+    local laserPts={}
+    local j=1
+    laserScan=sim.callScriptFunction('getMeasuredData@SICK_TiM310_fast',sim.scripttype_childscript)
+    for i=1,#laserScan,3 do
+        laserPts[j]={laserScan[i],laserScan[i+1]}
+        j=j+1
+    end
+    return laserPts
+end
+
+function getTrajectoryPoint()
+    local position,orientation
+    local linear_vel,angular_vel
+    local ptraj,vtraj
+    position=sim.getObjectPosition(ref_point,-1)
+    orientation=sim.getObjectOrientation(ref_point,-1)
+    linear_vel,angular_vel=sim.getObjectVelocity(ref_point)
+    if (orientation[3]>0) then
+        ptraj={position[1],position[2],orientation[2]-math.pi/2}
+    else
+        ptraj={position[1],position[2],math.pi/2-orientation[2]}
+    end
+    vtraj={linear_vel[1],linear_vel[2],angular_vel[3]}
+    
+    return ptraj,vtraj
+end
+
+function getOffCenterPoint(ptraj,vtraj,e)
+    local xc,yc,vxc,vyc
+    xc=ptraj[1]+e*math.cos(ptraj[3])
+    yc=ptraj[2]+e*math.sin(ptraj[3])
+    vxc=vtraj[1]-e*vtraj[3]*math.sin(ptraj[3])
+    vyc=vtraj[2]+e*vtraj[3]*math.cos(ptraj[3])
+    return {xc,yc},{vxc,vyc}
+end
+
+function kinematicControl(ptraj,vtraj,pose,k)
+    local vxc,vyc,vL,vR,ex,ey
+    ex=ptraj[1]-(pose[1]+e*math.cos(pose[3]))
+    ey=ptraj[2]-(pose[2]+e*math.sin(pose[3]))
+    vxc=vtraj[1]+k*ex
+    vyc=vtraj[2]+k*ey
+    wL=(1/(e*wheel_radius))*((e*math.cos(pose[3])+b*math.sin(pose[3]))*vxc+(e*math.sin(pose[3])-b*math.cos(pose[3]))*vyc)
+    wR=(1/(e*wheel_radius))*((e*math.cos(pose[3])-b*math.sin(pose[3]))*vxc+(e*math.sin(pose[3])+b*math.cos(pose[3]))*vyc)
+    return wL,wR
+end
+
+function updateRobotPose()
+    local pose
+    position=sim.getObjectPosition(robot_pose,-1)
+    orientation=sim.getObjectOrientation(robot_pose,-1)
+    pose={position[1],position[2],orientation[3]}
+    return pose
+end
