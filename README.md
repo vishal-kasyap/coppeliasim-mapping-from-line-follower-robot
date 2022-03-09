@@ -9,7 +9,7 @@ ROS (Robot Operating System) has many in-built algorithms for mapping, but mappi
 Steps to implement this project:
   1. Download the latest version of Coppeliasim from the given link. Select the EDU version for no usage restrictions.
      
-     https://www.coppeliarobotics.com/downloads
+     # https://www.coppeliarobotics.com/downloads
        
      
   2. Copy the map_file from the map_files folder in the main directory where the coppeliasim is installed.
