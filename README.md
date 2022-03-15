@@ -19,13 +19,19 @@ ROS (Robot Operating System) has many in-built algorithms for mapping, but mappi
   6. If everything goes well, you will get the entire map of the environment as the robot finishes one complete cycle. 
 
 
-## Mobile Robot
+# Mobile Robot
 
 The Robot Model is shown below for reference
 ![alt text](https://github.com/vishal-kasyap/coppeliasim_mapping_from_line_follower_robot/blob/main/coppeliasim_mapping_from_line_follower_robot/robot_in_coppeliasim_world.png "Robot Model")
 
-## Map Created
+# Map Created
 
 By executing the above code, the map of the environment obtained is shown below
 
 ![alt text](https://github.com/vishal-kasyap/coppeliasim_mapping_from_line_follower_robot/blob/main/coppeliasim_mapping_from_line_follower_robot/map_of_environment.png "Map Obtained")
+
+## NOTE:
+The Mobile robot used for this demonstration is designed using Fusion 360 and later converted to URDF File using this Github [link](https://github.com/vishal-kasyap/cad_to_urdf_conversion)
+
+    https://github.com/vishal-kasyap/cad_to_urdf_conversion
+It is then imported into CoppeliaSim environment.
